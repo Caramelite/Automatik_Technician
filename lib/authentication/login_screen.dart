@@ -1,5 +1,11 @@
 import 'package:automatik_technician_app/authentication/signup_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
+import '../global/global.dart';
+import '../splashScreen/splash_screen.dart';
+import '../widgets/progress_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -12,6 +18,56 @@ class _LoginScreenState extends State<LoginScreen>
 {
   TextEditingController emailTextEditingController = TextEditingController();
   TextEditingController passwordTextEditingController = TextEditingController();
+
+  validateForm() {
+    if(!emailTextEditingController.text.contains("@"))
+    {
+      Fluttertoast.showToast(msg: "Email Address is not valid.");
+    }
+
+    else if(passwordTextEditingController.text.isEmpty)
+    {
+      Fluttertoast.showToast(msg: "Password is required.");
+    }
+    else
+    {
+      loginTechNow();
+    }
+  }
+
+  loginTechNow() async {
+    showDialog(
+        context : context,
+        barrierDismissible: false,
+        builder: (BuildContext c)
+        {
+          return ProgressDialog(message: "Processing... Please wait");
+        }
+    );
+
+    final User? firebaseUser =
+        (
+            await fAuth.signInWithEmailAndPassword(
+                email: emailTextEditingController.text.trim(),
+                password: passwordTextEditingController.text.trim()
+            ).catchError((msg) {
+              Navigator.pop(context);
+              Fluttertoast.showToast(msg: "Error: " + msg.toString());
+            })
+        ).user;
+
+    if(firebaseUser != null)
+    {
+      currentFirebaseUser = firebaseUser;
+      Fluttertoast.showToast(msg: "Logged in Successfully!");
+      Navigator.push(context, MaterialPageRoute(builder: (c) => const MySplashScreen()));
+    }
+    else
+    {
+      Navigator.pop(context);
+      Fluttertoast.showToast(msg: "Account has not been created.");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +124,10 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: (){},
+                onPressed: ()
+                {
+                  validateForm();
+                },
                 style: ElevatedButton.styleFrom(primary: Colors.lightGreenAccent),
                 child: const Text("Login",
                   style: TextStyle(color: Colors.black54, fontSize: 18),
@@ -81,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 onPressed: ()
                 {
-                  Navigator.push(context, MaterialPageRoute(builder: (c) => SignUpScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (c) => const SignUpScreen()));
                 },
               ),
             ],
