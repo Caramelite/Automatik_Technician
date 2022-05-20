@@ -8,7 +8,36 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:623855632054:android:f55ba1b2b60644adec7017",
+        "mobilesdk_app_id": "1:623855632054:android:8d432c435dc28b5eec7017",
+        "android_client_info": {
+          "package_name": "com.automatik.automatikusersapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "623855632054-34tskv82gkkmev06q1ca02jt1j8vfhfn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6GMfnD8OkB_lz2AKspVZn5b2zR8CN8SY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "623855632054-34tskv82gkkmev06q1ca02jt1j8vfhfn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:623855632054:android:84bf36a349bcbedcec7017",
         "android_client_info": {
           "package_name": "com.capstone.automatiktechnicianapp"
         }
