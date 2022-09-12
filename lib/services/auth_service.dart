@@ -1,35 +1,26 @@
-
-import 'package:automatik_technician_app/constants/pack.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+import '../constants/pack.dart';
 
 class AuthController {
-  Future<User?> signInUser(
-    String email, String password) async {
-    String res = 'some error occured';
-    try{
-      if(email.isNotEmpty && password.isNotEmpty){
-        UserCredential cred = await firebaseAuth.signInWithEmailAndPassword(email: email, password: password);
-      }
-    }catch (e){
-      res = e.toString();
-    }
-    return null;
-  }
-  Future<User?> signUpUser(
-      String firstname, String lastname, String email, String password) async {
-    String res = 'some error occured';
+  static final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  Future<String> signUpUser(
+      String name, String address, String email, String password, String phone) async {
+    String res = 'some error occurred';
     try {
-      if (firstname.isNotEmpty &&
-          lastname.isNotEmpty &&
+      if (name.isNotEmpty &&
+          address.isNotEmpty &&
           email.isNotEmpty &&
+          phone.isNotEmpty &&
           password.isNotEmpty) {
         UserCredential cred = await firebaseAuth.createUserWithEmailAndPassword(
             email: email, password: password);
         firebaseStore.collection('technicians').doc(cred.user!.uid).set({
-          'First Name': firstname,
-          'Last Name': lastname,
+          'Name': name,
+          'Address': address,
           'Email': email,
+          'Phone': phone,
         });
         print(cred.user!.email);
         res = 'success';
@@ -39,7 +30,33 @@ class AuthController {
     } catch (e) {
       res = e.toString();
     }
-    return null;
+    return res;
   }
-  
+  // Sign Out
+  signOut() {
+    return firebaseAuth.signOut();
+  }
+
+  Future<String?> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return 'Success';
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        return 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        return 'Wrong password provided for that user.';
+      } else {
+        return e.message;
+      }
+    } catch (e) {
+      return e.toString();
+    }
+  }
 }

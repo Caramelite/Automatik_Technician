@@ -1,12 +1,12 @@
-
-
-import 'package:automatik_technician_app/Widgets/rounded_buttons.dart';
-import 'package:automatik_technician_app/Widgets/textfield.dart';
-import 'package:automatik_technician_app/Widgets/validators.dart';
-import 'package:automatik_technician_app/authentication/signup_screen.dart';
-import 'package:automatik_technician_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../Widgets/rounded_buttons.dart';
+import '../../Widgets/textfield.dart';
+import '../../Widgets/validators.dart';
+import '../../services/auth_service.dart';
+import '../mainScreens/main_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -77,9 +77,18 @@ class _LoginScreenState extends State<LoginScreen> {
               RoundedButton(
                 color: Colors.lightBlueAccent,
                 buttonTitle: 'LOGIN',
-                buttonOnPressed: () async{
-               await AuthController().signInUser(emailTextEditingController.text, passwordTextEditingController.text);
-               
+                buttonOnPressed: () async {
+                  final message = await AuthController().login(
+                      email: emailTextEditingController.text,
+                      password: passwordTextEditingController.text);
+                  if(message!.contains('Success')) {
+                    Get.to(() => const HomeScreen());
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(message),
+                    ),
+                  );
                 },
               ),
               TextButton(

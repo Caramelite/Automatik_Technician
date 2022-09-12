@@ -1,6 +1,7 @@
-import 'package:automatik_technician_app/splashScreen/splash_screen.dart';
+import 'package:automatik_technician_app/screens/splashScreen/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -8,7 +9,7 @@ void main() async {
 
   runApp(
       MyApp(
-        child : MaterialApp(
+        child : GetMaterialApp(
           title: 'Technician App',
           theme: ThemeData(
           primarySwatch: Colors.blue,
