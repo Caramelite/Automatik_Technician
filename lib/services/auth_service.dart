@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/pack.dart';
@@ -6,13 +8,14 @@ class AuthController {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   Future<String> signUpUser(
-      String name, String address, String email, String password, String phone) async {
+      String name, String address, String email, String password, String phone, String image) async {
     String res = 'some error occurred';
     try {
       if (name.isNotEmpty &&
           address.isNotEmpty &&
           email.isNotEmpty &&
           phone.isNotEmpty &&
+          image.isNotEmpty &&
           password.isNotEmpty) {
         UserCredential cred = await firebaseAuth.createUserWithEmailAndPassword(
             email: email, password: password);
@@ -21,6 +24,7 @@ class AuthController {
           'Address': address,
           'Email': email,
           'Phone': phone,
+          'ProfileImage': image,
         });
         print(cred.user!.email);
         res = 'success';
@@ -32,6 +36,7 @@ class AuthController {
     }
     return res;
   }
+
   // Sign Out
   signOut() {
     return firebaseAuth.signOut();

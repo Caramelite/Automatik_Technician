@@ -1,6 +1,12 @@
+import 'dart:io';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart';
 import '../../Widgets/dimensions.dart';
 import '../../Widgets/rounded_buttons.dart';
 import '../../Widgets/textfield.dart';
@@ -8,6 +14,7 @@ import '../../Widgets/validators.dart';
 import '../../services/auth_service.dart';
 import '../splashScreen/splash_screen.dart';
 import 'login_screen.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
@@ -20,12 +27,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool showSpinner = false;
   late String email;
   late String password;
-  TextEditingController emailC = TextEditingController();
-  TextEditingController nameC = TextEditingController();
-  TextEditingController addressC = TextEditingController();
-  TextEditingController phoneC = TextEditingController();
-  TextEditingController pass1C = TextEditingController();
-  TextEditingController pass2C = TextEditingController();
+  TextEditingController emailT = TextEditingController();
+  TextEditingController nameT = TextEditingController();
+  TextEditingController addressT = TextEditingController();
+  TextEditingController phoneT = TextEditingController();
+  TextEditingController pass1T = TextEditingController();
+  TextEditingController pass2T = TextEditingController();
   FocusNode emailFN = FocusNode();
   FocusNode nameFN = FocusNode();
   FocusNode addressFN = FocusNode();
@@ -40,15 +47,69 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
-    emailC.dispose();
-    nameC.dispose();
-    addressC.dispose();
-    phoneC.dispose();
-    pass1C.dispose();
-    pass2C.dispose();
+    emailT.dispose();
+    nameT.dispose();
+    addressT.dispose();
+    phoneT.dispose();
+    pass1T.dispose();
+    pass2T.dispose();
     scrollController.dispose();
 
     super.dispose();
+  }
+
+
+  firebase_storage.FirebaseStorage storage =
+      firebase_storage.FirebaseStorage.instance;
+  User? user = FirebaseAuth.instance.currentUser;
+
+  File? _photo;
+  final ImagePicker _picker = ImagePicker();
+  String? imageUrl;
+
+  Future imgFromGallery() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      if (pickedFile != null) {
+        _photo = File(pickedFile.path);
+      } else {
+        print('No image selected.');
+      }
+    });
+  }
+
+  Future imgFromCamera() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+
+    setState(() {
+      if (pickedFile != null) {
+        _photo = File(pickedFile.path);
+      } else {
+        print('No image selected.');
+      }
+    });
+  }
+
+  Future uploadFile() async {
+    if (_photo == null) return;
+    final fileName = basename(_photo!.path);
+    const destination = 'Images/TechProfilePictures/';
+
+    try {
+      final ref = firebase_storage.FirebaseStorage.instance
+          .ref(destination)
+          .child(fileName);
+      await ref.putFile(_photo!);
+
+      //IMAGE URL
+      imageUrl = await ref.getDownloadURL();
+      await AuthController().signUpUser(nameT.text, addressT.text,
+          emailT.text, pass2T.text, phoneT.text, imageUrl!);
+      Get.to(() => const MySplashScreen());
+    } catch (e) {
+      print('error occurred');
+    }
   }
 
   @override
@@ -60,10 +121,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
         child: Column(
           children: [
             SizedBox(height: Dimensions.height20*3),
-            ElevatedButton(
-              child: const Text("Upload Image", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
-              onPressed: (){
-              },
+            Center(
+              child: GestureDetector(
+                onTap: () {
+                  _showPicker(context);
+                },
+                child: CircleAvatar(
+                  radius: 55,
+                  backgroundColor: const Color(0xffFDCF09),
+                  child: _photo != null
+                      ? ClipRRect(
+                    borderRadius: BorderRadius.circular(50),
+                    child: Image.file(
+                      _photo!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.fitHeight,
+                    ),
+                  )
+                      : Container(
+                    decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(50)),
+                    width: 100,
+                    height: 100,
+                    child: Icon(
+                      Icons.camera_alt,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ),
+              ),
             ),
             SizedBox(height: Dimensions.height20+Dimensions.height10),
             Container(
@@ -82,7 +170,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               child: TextFormField(
                 validator: UnifiedValidators.emptyValidator,
-                controller: nameC,
+                controller: nameT,
                 focusNode: nameFN,
                 textAlign: TextAlign.left,
                 onEditingComplete: () {
@@ -114,7 +202,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               child: TextFormField(
                 validator: UnifiedValidators.emptyValidator,
-                controller: addressC,
+                controller: addressT,
                 focusNode: addressFN,
                 textAlign: TextAlign.left,
                 keyboardType: TextInputType.name,
@@ -143,7 +231,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               child: TextFormField(
                 validator: UnifiedValidators.emailValidator,
-                controller: emailC,
+                controller: emailT,
                 focusNode: emailFN,
                 textAlign: TextAlign.left,
                 onEditingComplete: () {
@@ -175,7 +263,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               child: TextFormField(
                 validator: UnifiedValidators.emptyValidator,
-                controller: phoneC,
+                controller: phoneT,
                 focusNode: phoneFN,
                 textAlign: TextAlign.left,
                 onEditingComplete: () {
@@ -207,7 +295,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               child: TextFormField(
                 validator: UnifiedValidators.passwordValidator,
-                controller: pass1C,
+                controller: pass1T,
                 focusNode: pass1FN,
                 textAlign: TextAlign.left,
                 onEditingComplete: () {
@@ -250,8 +338,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: TextFormField(
                 validator: (value) =>
                     MatchValidator(errorText: 'Password does not match')
-                        .validateMatch(pass1C.text, pass2C.text),
-                controller: pass2C,
+                        .validateMatch(pass1T.text, pass2T.text),
+                controller: pass2T,
                 focusNode: pass2FN,
                 textAlign: TextAlign.left,
                 obscureText: hidePassword1,
@@ -279,10 +367,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 buttonTitle: 'Register',
                 color: Colors.blueAccent,
                 buttonOnPressed: () async {
-                  Navigator.of(context).pushReplacement(
+                  uploadFile();
+                 /* Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (context) => const MySplashScreen()));
-                  await AuthController().signUpUser(nameC.text, addressC.text,
-                      emailC.text, pass2C.text, phoneC.text);
+*/
                 },
               ),
             ),
@@ -290,7 +378,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Alredy have an account?",  style: TextStyle(color: Colors.grey[700]),),
+                Text("Already have an account?",  style: TextStyle(color: Colors.grey[700]),),
                 TextButton(
                   child: Text("Login here",
                     style: TextStyle(color: Colors.grey[850]),
@@ -306,5 +394,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       ),
     );
+  }
+
+  void _showPicker(context) {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc) {
+          return SafeArea(
+            child: Wrap(
+              children: <Widget>[
+                ListTile(
+                    leading: const Icon(Icons.photo_library),
+                    title: const Text('Gallery'),
+                    onTap: () {
+                      imgFromGallery();
+                      Navigator.of(context).pop();
+                    }),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('Camera'),
+                  onTap: () {
+                    imgFromCamera();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          );
+        });
   }
 }
