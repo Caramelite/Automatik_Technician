@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -64,12 +66,16 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: snapshot.data!.docs.map((DocumentSnapshot snap) {
                           return  Column(
                             children: [
-                              //profile icon
-                              const AppIcon(icon: Icons.person,
+                              CircleAvatar(
+                                radius: 85,
                                 backgroundColor: Colors.blue,
-                                iconColor: Colors.white,
-                                iconSize: 85,
-                                size: 130,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(50),
+                                  child: Image.network(
+                                    snap['Image'],
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
                               ),
                               SizedBox(height: Dimensions.height20),
                               ProfileWidget(

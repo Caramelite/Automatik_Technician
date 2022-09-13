@@ -91,19 +91,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 },
               ),
-              TextButton(
-                child: const Text(
-                  "Don't have an account yet? Click here",
-                  style: TextStyle(color: Colors.grey),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (c) => const SignUpScreen(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Don't have an account yet?",  style: TextStyle(color: Colors.grey[700]),),
+                  TextButton(
+                    child: Text("Click here",
+                      style: TextStyle(color: Colors.grey[850]),
                     ),
-                  );
-                },
+                    onPressed: ()
+                    {
+                      Navigator.push(context, MaterialPageRoute(builder: (c) => const SignUpScreen()));
+                    },
+                  )
+                ],
               ),
             ],
           ),

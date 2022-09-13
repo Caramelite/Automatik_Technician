@@ -16,8 +16,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List pages = [
     const HomeTabPage(),
-    const RatingsTabPage(),
     const EarningsTabPage(),
+    const RatingsTabPage(),
     const ProfilePage()
   ];
 
@@ -44,11 +44,11 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined),
             label: "Home",
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.archive_outlined),
-            label: "History",
+          BottomNavigationBarItem(icon: Icon(Icons.credit_card_outlined),
+            label: "Earnings",
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined),
-            label: "Cart",
+          BottomNavigationBarItem(icon: Icon(Icons.star_outline),
+            label: "Rate",
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person_outlined),
             label: "Profile",
