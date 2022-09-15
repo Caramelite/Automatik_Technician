@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'package:firebase_database/firebase_database.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_geofire/flutter_geofire.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../assistants/assistant_methods.dart';
-import '../global/global.dart';
+import '../Widgets/dimensions.dart';
+import '../Widgets/textfield.dart';
+import '../Widgets/validators.dart';
 
 class HomeTabPage extends StatefulWidget {
   const HomeTabPage({Key? key}) : super(key: key);
@@ -16,150 +15,90 @@ class HomeTabPage extends StatefulWidget {
   _HomeTabPageState createState() => _HomeTabPageState();
 }
 
-class _HomeTabPageState extends State<HomeTabPage> 
-{
-  final Completer<GoogleMapController> _controllerGoogleMap = Completer();
-  GoogleMapController? newGoogleMapController;
-
+class _HomeTabPageState extends State<HomeTabPage> {
   static const CameraPosition _kGooglePlex = CameraPosition(
-    target: LatLng(10.271752, 123.850748),
-    zoom: 14.4746,
+    target: LatLng(10.296838615231485, 123.87087173762541),
+    zoom: 15.80,
   );
+  final Completer<GoogleMapController> _controller = Completer();
+  GoogleMapController? newGoogleMapController;
+  Position? position;
+  List<Placemark>? placemarks;
+  TextEditingController locationT = TextEditingController();
 
-  Position? technicianCurrentPosition;
-  var geoLocator = Geolocator();
+  getCurrentLocation() async{
+    Position newPosition = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    position = newPosition;
+    placemarks = await placemarkFromCoordinates(
+      position!.latitude, position!.longitude
+    );
 
-  LocationPermission? _locationPermission;
-  double bottomPaddingOfMap = 0;
+    await Geolocator.checkPermission();
+    await Geolocator.requestPermission();
 
-  String statusText = "Go Online";
-  Color buttonColor = Colors.grey;
-  bool isTechnicianActive = false;
+    Placemark pMark = placemarks![0];
+    String completeAddress = '${pMark.subThoroughfare} ${pMark.thoroughfare}, ${pMark.subLocality} ${pMark.locality}, ${pMark.subAdministrativeArea}, ${pMark.administrativeArea} ${pMark.postalCode}, ${pMark.country}';
 
-  checkIfLocationPermissionAllowed() async
-  {
-    _locationPermission = await Geolocator.requestPermission();
-
-    if(_locationPermission == LocationPermission.denied)
-    {
-      _locationPermission = await Geolocator.requestPermission();
-    }
+    locationT.text = completeAddress;
   }
 
-  locateCustomerPosition() async
-  {
-    //give us the position of the current user
-    Position cPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    technicianCurrentPosition = cPosition;
-
-    LatLng latLngPosition = LatLng(technicianCurrentPosition!.latitude, technicianCurrentPosition!.longitude);
-    CameraPosition cameraPosition = CameraPosition(target: latLngPosition, zoom: 16);
-
-    newGoogleMapController!.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
-
-    String humanReadableAddress = await AssistantMethods.searchAddressForGeographicCoordinates(technicianCurrentPosition!, context);
-    print("This is your address = " + humanReadableAddress);
-
-    // userName = customerModelCurrentInfo!.name!;
-    // userEmail = customerModelCurrentInfo!.email!;
-    //
-    // print("name = " + userName);
-    // print("email = " + userEmail);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    checkIfLocationPermissionAllowed();
-  }
-
-  
   @override
   Widget build(BuildContext context) {
     return Stack(
-      children: [
-        GoogleMap(
-          mapType: MapType.normal,
-          myLocationEnabled: true,
-          initialCameraPosition: _kGooglePlex,
-          onMapCreated: (GoogleMapController controller)
-          {
-            _controllerGoogleMap.complete(controller);
-            newGoogleMapController = controller;
-          },
-        ),
-
-        //UI for online or offline technician
-        statusText != "Go Offline"
-            ? Container(
-          height: MediaQuery.of(context).size.height,
-          width: double.infinity,
-          color: Colors.black87,
-        )
-            : Container(),
-
-        //Button for going online or offline
-        Positioned(
-            top: statusText  != "Go Offline" ? MediaQuery.of(context).size.height*0.46 : 25,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: ()
-                {
-                  if(isTechnicianActive != true) //offline
-                  {
-                    technicianOnlineNow();
-                    updateTechnicianLocationAtRealTime();
-
-                    setState(() {
-                      statusText = "Go Offline";
-                      isTechnicianActive = true;
-                      buttonColor = Colors.transparent;
-                    });
-
-                    //display showToast
-                    Fluttertoast.showToast(msg: "You are online now");
-                  }
-                  else
-                    {
-                      technicianIsOfflineNow();
-
-                      setState(() {
-                        statusText = "Go Online";
-                        isTechnicianActive = false;
-                        buttonColor = Colors.grey;
-                      });
-
-                      //display showToast
-                      Fluttertoast.showToast(msg: "You are offline now");
-                    }
-                },
-                style: ElevatedButton.styleFrom(
-                  primary: buttonColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  shape:RoundedRectangleBorder(borderRadius:  BorderRadius.circular(26))
-                ),
-                child: statusText != "Go Offline"
-                    ? Text(statusText,
-                style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white
-                ))
-                    : const Icon(
-                  Icons.phonelink_ring,
-                  color: Colors.white,
-                  size: 26,
-                ),
-
-              )
-            ],
+        children: [
+          GoogleMap(
+            mapType: MapType.normal,
+            myLocationEnabled: true,
+            initialCameraPosition: _kGooglePlex,
+            onMapCreated: (GoogleMapController controller) {
+              _controller.complete(controller);
+              newGoogleMapController = controller;
+            },
           ),
-        ),
-      ],
-    );
+          Align(
+            alignment: FractionalOffset.bottomCenter,
+            child: Container(
+                padding: EdgeInsets.only(bottom: Dimensions.height20*3.2, left: Dimensions.width20, right: Dimensions.width20),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                          blurRadius: 1,
+                          offset: const Offset(0, 2),
+                          color: Colors.grey.withOpacity(0.2)
+                      )
+                    ]
+                ),
+                child: TextFormField(
+                  validator: UnifiedValidators.emptyValidator,
+                  controller: locationT,
+                  textAlign: TextAlign.left,
+                  keyboardType: TextInputType.name,
+                  decoration: kTextFieldDecoration.copyWith(
+                    labelText: 'Location',
+                    /*prefixIcon: const Icon(
+                      Icons.location_on,
+                      color: Colors.blue,
+                    ),*/
+                  ),
+                )
+            ),
+          ),
+          Align(
+            alignment: FractionalOffset.bottomCenter,
+            child: ElevatedButton(
+              child: const Text(
+                'Get Location'
+              ),
+              onPressed: () {
+                getCurrentLocation();
+                }
+            ),
+          )
+        ],
+      );
   }
 
   technicianOnlineNow() async
